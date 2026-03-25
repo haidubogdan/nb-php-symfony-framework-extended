@@ -1,0 +1,93 @@
+# This workflow will build a Java project with Ant
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-ant
+
+name: nbm modular package
+
+on:
+  workflow_dispatch:
+jobs:
+  package:
+    name: Create package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create package
+        run: echo "package"
+  build:
+    needs: package 
+    strategy:
+      matrix:
+        label: [23, 24, 25, 26, 27, 28, 29]
+        include:
+          - label: 23
+            version: 23-2985f1fa57ce0c1877bad0f86d5e5504d65f9286
+            java: 11
+          - label: 24
+            version: 24-6308a54f5ac18a75f460d86cc9bb8d4cc7213564
+            java: 11
+          - label: 25
+            version: 25-0f82d968998b78ef4d323537d1149eb68e747d9a
+            java: 17
+          - label: 26
+            version: 26-81d21190648c8a1bae92bc9cdb0bb9783ae4912f
+            java: 17
+          - label: 27
+            version: 27-312307d41168e81225f112a1365f8706d843e5ea
+            java: 17
+          - label: 28
+            version: 28-bb4f5c31012229fb1577f019127e203b6925ab33
+            java: 17
+          - label: 29
+            version: 29-e45e218307fce4891f6ea1d58efb5ff7031518e2
+            java: 21
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        java-version: '${{ matrix.java }}'
+        distribution: 'temurin'
+    - name : get version
+      run: echo "::set-output name=version::$(grep 'OpenIDE-Module-Specification-Version'  ./manifest.mf | cut -d':' -f 2-)"
+      id: nbm_version
+    - name: Set version
+      run: echo ${{ steps.nbm_version.outputs.version }}    
+    - name : prepare the files from project
+      run : mkdir -p  nb-plugin-package/src/main/java
+    - name : prepare the files from project  
+      run : mkdir -p nb-plugin-package/src/main/nbm
+    - name : prepare the files from project  
+      run : mkdir -p nb-plugin-package/src/main/resources/org/netbeans/modules/php/symfony
+    - name : copy main app java
+      run : cp -rf ./src/org nb-plugin-package/src/main/java
+    - name : copy base resources
+      run : cp -rf ./src/org/netbeans/modules/php/symfony/resources nb-plugin-package/src/main/resources/org/netbeans/modules/php/symfony
+    - name : create ui bundle resource 
+      run : mkdir -p nb-plugin-package/src/main/resources/org/netbeans/modules/php/symfony/ui/customizer
+    - name : copy bundle customizer
+      run : cp  ./src/org/netbeans/modules/php/symfony/ui/customizer/Bundle.properties nb-plugin-package/src/main/resources/org/netbeans/modules/php/symfony/ui/customizer
+    - name : copy main bundle
+      run : cp  ./src/org/netbeans/modules/php/symfony/Bundle.properties nb-plugin-package/src/main/resources/org/netbeans/modules/php/symfony
+    - name : create ui bundle options resource 
+      run : mkdir -p nb-plugin-package/src/main/resources/org/netbeans/modules/php/symfony/ui/options
+    - name : copy bundle symfony options
+      run : cp  ./src/org/netbeans/modules/php/symfony/ui/options/Bundle.properties nb-plugin-package/src/main/resources/org/netbeans/modules/php/symfony/ui/options
+    - name : prepare the files from project
+      run : cp ./manifest.mf nb-plugin-package/src/main/nbm/manifest.mf
+    - name : prepare the files from project  
+      run : cp ./.github/pom.xml nb-plugin-package/pom.xml
+    - name : prepare the files from project  
+      run : cp ./nbproject/project.properties nb-plugin-package/project.properties
+    - name : prepare the files from project  
+      run : cp ./LICENSE nb-plugin-package/LICENSE
+    - name : package nbm${{ matrix.label }}
+      working-directory: ./nb-plugin-package
+      env:
+        NB_RELEASE_VERSION: ${{ matrix.label }}0 
+        NB_META_INF: ${{ matrix.version }}
+      run : echo NB_RELEASE_VERSION | mvn package  
+    - name : upload nbm ${{ matrix.label }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: php-symfony-nbm-${{ matrix.label }}
+        path: ./nb-plugin-package/target/nbm/*.nbm

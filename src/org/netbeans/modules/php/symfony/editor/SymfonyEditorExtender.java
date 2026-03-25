@@ -1,0 +1,24 @@
+/*
+Licensed to the Apache Software Foundation (ASF)
+ */
+package org.netbeans.modules.php.symfony.editor;
+
+import java.util.Collections;
+import java.util.List;
+import org.netbeans.modules.php.api.editor.PhpBaseElement;
+import org.netbeans.modules.php.spi.editor.EditorExtender;
+import org.openide.filesystems.FileObject;
+
+/**
+ * looks to be more compatible with components ??
+ * 
+ * @author bogdan
+ */
+public class SymfonyEditorExtender extends EditorExtender {
+
+    @Override
+    public List<PhpBaseElement> getElementsForCodeCompletion(FileObject fo) {
+        return Collections.emptyList();
+    }
+
+}
